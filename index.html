@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clear English Pro</title>
+    <!-- FAVICON: El logo del rayo para la pestaña del navegador -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234f46e5%22/><polygon points=%2213 2 3 14 12 14 11 22 21 10 12 10 13 2%22 fill=%22white%22 stroke=%22white%22 stroke-width=%222%22 stroke-linejoin=%22round%22/></svg>">
+   
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -54,12 +57,17 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const Icon = ({ name, size = 24, className = "", ...props }) => {
+        const Icon = ({ name, size = 24, className = "" }) => {
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
             }, [name]);
-            return <i data-lucide={name} width={size} height={size} className={className} {...props}></i>;
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
         };
+
+        // --- IRREGULAR VERBS DATA ---
+        const VERBS_IRREGULAR = [
+            { base: "be", past: "was/were", pp: "been" }, { base: "beat", past: "beat", pp: "beaten" }, { base: "become", past: "became", pp: "become" }, { base: "begin", past: "began", pp: "begun" }, { base: "bite", past: "bit", pp: "bitten" }, { base: "break", past: "broke", pp: "broken" }, { base: "bring", past: "brought", pp: "brought" }, { base: "build", past: "built", pp: "built" }, { base: "buy", past: "bought", pp: "bought" }, { base: "catch", past: "caught", pp: "caught" }, { base: "choose", past: "chose", pp: "chosen" }, { base: "come", past: "came", pp: "come" }, { base: "cost", past: "cost", pp: "cost" }, { base: "cut", past: "cut", pp: "cut" }, { base: "do", past: "did", pp: "done" }, { base: "draw", past: "drew", pp: "drawn" }, { base: "drink", past: "drank", pp: "drunk" }, { base: "drive", past: "drove", pp: "driven" }, { base: "eat", past: "ate", pp: "eaten" }, { base: "fall", past: "fell", pp: "fallen" }, { base: "feel", past: "felt", pp: "felt" }, { base: "fight", past: "fought", pp: "fought" }, { base: "find", past: "found", pp: "found" }, { base: "fly", past: "flew", pp: "flown" }, { base: "forget", past: "forgot", pp: "forgotten" }, { base: "forgive", past: "forgave", pp: "forgiven" }, { base: "freeze", past: "froze", pp: "frozen" }, { base: "get", past: "got", pp: "got" }, { base: "give", past: "gave", pp: "given" }, { base: "go", past: "went", pp: "gone" }, { base: "grow", past: "grew", pp: "grown" }, { base: "have", past: "had", pp: "had" }, { base: "hear", past: "heard", pp: "heard" }, { base: "hide", past: "hid", pp: "hidden" }, { base: "hit", past: "hit", pp: "hit" }, { base: "hold", past: "held", pp: "held" }, { base: "hurt", past: "hurt", pp: "hurt" }, { base: "keep", past: "kept", pp: "kept" }, { base: "know", past: "knew", pp: "known" }, { base: "leave", past: "left", pp: "left" }, { base: "lend", past: "lent", pp: "lent" }, { base: "let", past: "let", pp: "let" }, { base: "lose", past: "lost", pp: "lost" }, { base: "make", past: "made", pp: "made" }, { base: "meet", past: "met", pp: "met" }, { base: "pay", past: "paid", pp: "paid" }, { base: "put", past: "put", pp: "put" }, { base: "read", past: "read", pp: "read" }, { base: "ride", past: "rode", pp: "ridden" }, { base: "ring", past: "rang", pp: "rung" }, { base: "run", past: "ran", pp: "run" }, { base: "say", past: "said", pp: "said" }, { base: "see", past: "saw", pp: "seen" }, { base: "sell", past: "sold", pp: "sold" }, { base: "send", past: "sent", pp: "sent" }, { base: "sing", past: "sang", pp: "sung" }, { base: "sit", past: "sat", pp: "sat" }, { base: "sleep", past: "slept", pp: "slept" }, { base: "speak", past: "spoke", pp: "spoken" }, { base: "spend", past: "spent", pp: "spent" }, { base: "stand", past: "stood", pp: "stood" }, { base: "steal", past: "stole", pp: "stolen" }, { base: "swim", past: "swam", pp: "swum" }, { base: "take", past: "took", pp: "taken" }, { base: "teach", past: "taught", pp: "taught" }, { base: "tear", past: "tore", pp: "torn" }, { base: "tell", past: "told", pp: "told" }, { base: "think", past: "thought", pp: "thought" }, { base: "throw", past: "threw", pp: "thrown" }, { base: "understand", past: "understood", pp: "understood" }, { base: "wake", past: "woke", pp: "woken" }, { base: "wear", past: "wore", pp: "worn" }, { base: "weep", past: "wept", pp: "wept" }, { base: "win", past: "won", pp: "won" }, { base: "wind", past: "wound", pp: "wound" }, { base: "write", past: "wrote", pp: "written" }
+        ];
 
         // --- 1. CONSTANTS & DATA ---
         const SUBJECTS = ["I", "You", "He", "She", "It", "We", "They", "The student", "My friend", "The teacher", "The doctor", "Everyone", "Nobody"];
@@ -79,39 +87,6 @@
             { base: "start", ing: "starting", past: "started" }, { base: "finish", ing: "finishing", past: "finished" }, { base: "open", ing: "opening", past: "opened" },
             { base: "close", ing: "closing", past: "closed" }, { base: "visit", ing: "visiting", past: "visited" }, { base: "need", ing: "needing", past: "needed" },
             { base: "want", ing: "wanting", past: "wanted" }, { base: "like", ing: "liking", past: "liked" }, { base: "love", ing: "loving", past: "loved" }
-        ];
-
-        const VERBS_IRREGULAR = [
-            { base: "be", past: "was/were", pp: "been" }, { base: "beat", past: "beat", pp: "beaten" }, { base: "become", past: "became", pp: "become" }, { base: "begin", past: "began", pp: "begun" },
-            { base: "bite", past: "bit", pp: "bitten" }, { base: "break", past: "broke", pp: "broken" }, { base: "bring", past: "brought", pp: "brought" }, { base: "build", past: "built", pp: "built" },
-            { base: "buy", past: "bought", pp: "bought" }, { base: "catch", past: "caught", pp: "caught" }, { base: "choose", past: "chose", pp: "chosen" }, { base: "come", past: "came", pp: "come" },
-            { base: "cost", past: "cost", pp: "cost" }, { base: "cut", past: "cut", pp: "cut" }, { base: "do", past: "did", pp: "done" }, { base: "draw", past: "drew", pp: "drawn" },
-            { base: "drink", past: "drank", pp: "drunk" }, { base: "drive", past: "drove", pp: "driven" }, { base: "eat", past: "ate", pp: "eaten" }, { base: "fall", past: "fell", pp: "fallen" },
-            { base: "feel", past: "felt", pp: "felt" }, { base: "fight", past: "fought", pp: "fought" }, { base: "find", past: "found", pp: "found" }, { base: "fly", past: "flew", pp: "flown" },
-            { base: "forget", past: "forgot", pp: "forgotten" }, { base: "forgive", past: "forgave", pp: "forgiven" }, { base: "freeze", past: "froze", pp: "frozen" }, { base: "get", past: "got", pp: "got" },
-            { base: "give", past: "gave", pp: "given" }, { base: "go", past: "went", pp: "gone" }, { base: "grow", past: "grew", pp: "grown" }, { base: "have", past: "had", pp: "had" },
-            { base: "hear", past: "heard", pp: "heard" }, { base: "hide", past: "hid", pp: "hidden" }, { base: "hit", past: "hit", pp: "hit" }, { base: "hold", past: "held", pp: "held" },
-            { base: "hurt", past: "hurt", pp: "hurt" }, { base: "keep", past: "kept", pp: "kept" }, { base: "know", past: "knew", pp: "known" }, { base: "leave", past: "left", pp: "left" },
-            { base: "lend", past: "lent", pp: "lent" }, { base: "let", past: "let", pp: "let" }, { base: "lose", past: "lost", pp: "lost" }, { base: "make", past: "made", pp: "made" },
-            { base: "meet", past: "met", pp: "met" }, { base: "pay", past: "paid", pp: "paid" }, { base: "put", past: "put", pp: "put" }, { base: "read", past: "read", pp: "read" },
-            { base: "ride", past: "rode", pp: "ridden" }, { base: "ring", past: "rang", pp: "rung" }, { base: "run", past: "ran", pp: "run" }, { base: "say", past: "said", pp: "said" },
-            { base: "see", past: "saw", pp: "seen" }, { base: "sell", past: "sold", pp: "sold" }, { base: "send", past: "sent", pp: "sent" }, { base: "sing", past: "sang", pp: "sung" },
-            { base: "sit", past: "sat", pp: "sat" }, { base: "sleep", past: "slept", pp: "slept" }, { base: "speak", past: "spoke", pp: "spoken" }, { base: "spend", past: "spent", pp: "spent" },
-            { base: "stand", past: "stood", pp: "stood" }, { base: "steal", past: "stole", pp: "stolen" }, { base: "swim", past: "swam", pp: "swum" }, { base: "take", past: "took", pp: "taken" },
-            { base: "teach", past: "taught", pp: "taught" }, { base: "tear", past: "tore", pp: "torn" }, { base: "tell", past: "told", pp: "told" }, { base: "think", past: "thought", pp: "thought" },
-            { base: "throw", past: "threw", pp: "thrown" }, { base: "understand", past: "understood", pp: "understood" }, { base: "wake", past: "woke", pp: "woken" }, { base: "wear", past: "wore", pp: "worn" }, { base: "weep", past: "wept", pp: "wept" },
-            { base: "win", past: "won", pp: "won" }, { base: "write", past: "wrote", pp: "written" }
-        ];
-
-        const GRAMMAR_LIBRARY = [
-            { category: "1. Irregular Verbs & Past", count: 11, color: "blue", topics: ["Irregular Past Simple, Part 1", "Irregular Past Simple, Part 2", "Irregular Past Participle, Part 1", "Irregular Past Participle, Part 2", "Past Simple Positive (Irregular Verbs 1)", "Past Simple Positive (Irregular Verbs 2)", "Past Simple Negative", "Past Simple Yes / No Questions", "Past Simple Wh Questions", "Past Simple All Forms Mixed 1", "Past Simple All Forms Mixed 2"] },
-            { category: "2. Present Tenses", count: 12, color: "emerald", topics: ["Present Simple Positive (be)", "Present Simple Negative (be)", "Present Simple Questions (be)", "Present Simple Mixed (be)", "Present Simple Positive (other verbs)", "Present Simple Negative (other verbs)", "Present Simple Questions (other verbs)", "Present Simple Mixed Forms", "Present Continuous Positive & Negative", "Present Continuous Questions", "Present Continuous Mixed", "Present Simple vs Present Continuous"] },
-            { category: "3. Perfect Tenses", count: 9, color: "violet", topics: ["Present Perfect Positive", "Present Perfect Negative", "Present Perfect Questions", "Present Perfect Mixed", "Past Simple vs Present Perfect", "Present Perfect Continuous", "Present Perfect Simple vs Continuous", "Past Perfect Simple", "Past Perfect Continuous"] },
-            { category: "4. Future Forms", count: 7, color: "cyan", topics: ["Future Simple", "Future Continuous", "Future Perfect", "Future Perfect Continuous", "Mixed Future Forms", "Future Simple vs Present Simple", "Negative Questions"] },
-            { category: "5. Conditionals & Reported Speech", count: 7, color: "amber", topics: ["Zero Conditional", "First Conditional", "Second Conditional", "Third Conditional", "Mixed Conditionals", "Reported Speech (Statements)", "Reported Speech (Questions & Requests)"] },
-            { category: "6. Passive & Modal Verbs", count: 7, color: "rose", topics: ["Passive – Present", "Passive – Past", "Passive – Perfect", "Passive – Future", "Passive – Mixed Forms", "Modal Verbs", "Modal Verbs (Probability & Obligation)"] },
-            { category: "7. Advanced Structures (C1/C2)", count: 9, color: "fuchsia", topics: ["Relative Clauses", "Relative Pronouns", "Inversion", "Verb Patterns", "Causatives", "Embedded / Indirect Questions", "Gerunds & Infinitives", "Reflexive Pronouns", "Advanced Mixed Structures"] },
-            { category: "8. Prepositions & Articles", count: 6, color: "slate", topics: ["Time Prepositions", "Place Prepositions", "Verbs + Prepositions", "Adjectives + Prepositions", "Articles (A / The / Zero Article)", "Linking Words"] }
         ];
 
         // --- 2. HELPER FUNCTIONS ---
@@ -292,6 +267,18 @@
             exercises.sort(() => Math.random() - 0.5);
             return { exercises, theoryRule: getRuleForTopic(topicName) };
         };
+
+        // --- GRAMMAR LIBRARY ---
+        const GRAMMAR_LIBRARY = [
+            { category: "1. Irregular Verbs & Past", count: 11, color: "blue", topics: ["Irregular Past Simple, Part 1", "Irregular Past Simple, Part 2", "Irregular Past Participle, Part 1", "Irregular Past Participle, Part 2", "Past Simple Positive (Irregular Verbs 1)", "Past Simple Positive (Irregular Verbs 2)", "Past Simple Negative", "Past Simple Yes / No Questions", "Past Simple Wh Questions", "Past Simple All Forms Mixed 1", "Past Simple All Forms Mixed 2"] },
+            { category: "2. Present Tenses", count: 12, color: "emerald", topics: ["Present Simple Positive (be)", "Present Simple Negative (be)", "Present Simple Questions (be)", "Present Simple Mixed (be)", "Present Simple Positive (other verbs)", "Present Simple Negative (other verbs)", "Present Simple Questions (other verbs)", "Present Simple Mixed Forms", "Present Continuous Positive & Negative", "Present Continuous Questions", "Present Continuous Mixed", "Present Simple vs Present Continuous"] },
+            { category: "3. Perfect Tenses", count: 9, color: "violet", topics: ["Present Perfect Positive", "Present Perfect Negative", "Present Perfect Questions", "Present Perfect Mixed", "Past Simple vs Present Perfect", "Present Perfect Continuous", "Present Perfect Simple vs Continuous", "Past Perfect Simple", "Past Perfect Continuous"] },
+            { category: "4. Future Forms", count: 7, color: "cyan", topics: ["Future Simple", "Future Continuous", "Future Perfect", "Future Perfect Continuous", "Mixed Future Forms", "Future Simple vs Present Simple", "Negative Questions"] },
+            { category: "5. Conditionals & Reported Speech", count: 7, color: "amber", topics: ["Zero Conditional", "First Conditional", "Second Conditional", "Third Conditional", "Mixed Conditionals", "Reported Speech (Statements)", "Reported Speech (Questions & Requests)"] },
+            { category: "6. Passive & Modal Verbs", count: 7, color: "rose", topics: ["Passive – Present", "Passive – Past", "Passive – Perfect", "Passive – Future", "Passive – Mixed Forms", "Modal Verbs", "Modal Verbs (Probability & Obligation)"] },
+            { category: "7. Advanced Structures (C1/C2)", count: 9, color: "fuchsia", topics: ["Relative Clauses", "Relative Pronouns", "Inversion", "Verb Patterns", "Causatives", "Embedded / Indirect Questions", "Gerunds & Infinitives", "Reflexive Pronouns", "Advanced Mixed Structures"] },
+            { category: "8. Prepositions & Articles", count: 6, color: "slate", topics: ["Time Prepositions", "Place Prepositions", "Verbs + Prepositions", "Adjectives + Prepositions", "Articles (A / The / Zero Article)", "Linking Words"] }
+        ];
 
         // --- COMPONENTS ---
         function Confetti() {
