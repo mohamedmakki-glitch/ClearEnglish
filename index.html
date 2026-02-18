@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Carga estable de Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
    
     <style>
@@ -57,42 +58,64 @@
     <script type="text/babel" data-type="module">
         // --- FIREBASE IMPORTS ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Added signInAnonymously and updateProfile for fallback handling
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInAnonymously, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
        
         const { useState, useEffect, useRef } = React;
 
-        // --- FIREBASE CONFIGURATION ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        // -----------------------------------------------------------
+        // ⚠️ IMPORTANTE PARA GITHUB: PEGA TU CONFIG DE FIREBASE AQUÍ ⚠️
+        // Si lo dejas vacío, la app funcionará en "Modo Demo" (sin Google real).
+        // -----------------------------------------------------------
+        const firebaseConfigOverride = {
+            // apiKey: "TU_API_KEY",
+            // authDomain: "TU_DOMINIO.firebaseapp.com",
+            // projectId: "TU_PROJECT_ID",
+            // ... etc
+        };
 
-        // --- ICON COMPONENT (RESTORED TO STABLE VERSION) ---
+        // --- SAFE FIREBASE INITIALIZATION ---
+        let auth, provider;
+        let isFirebaseActive = false;
+
+        try {
+            // Priority: User config > Environment config > Empty
+            const configToUse = Object.keys(firebaseConfigOverride).length > 0
+                ? firebaseConfigOverride
+                : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {});
+
+            if (Object.keys(configToUse).length > 0 && configToUse.apiKey) {
+                const app = initializeApp(configToUse);
+                auth = getAuth(app);
+                provider = new GoogleAuthProvider();
+                isFirebaseActive = true;
+            } else {
+                console.warn("No Firebase config found. Running in Demo Mode.");
+            }
+        } catch (e) {
+            console.error("Firebase init failed:", e);
+        }
+
+        // --- ICON COMPONENT (ROBUST) ---
         const Icon = ({ name, size = 24, className = "", fill = "none" }) => {
             useEffect(() => {
                 if (window.lucide) {
-                    // Force refresh icons when component mounts or updates
                     window.lucide.createIcons();
                 }
             }, [name]);
-            return <i data-lucide={name} width={size} height={size} className={className} fill={fill}></i>;
+            return <i data-lucide={name} width={size} height={size} className={className} style={{ fill: fill === 'none' ? 'transparent' : fill }}></i>;
         };
 
-        // --- IRREGULAR VERBS DATA ---
+        // --- DATA CONSTANTS (VERBS & GRAMMAR) ---
         const VERBS_IRREGULAR = [
             { base: "be", past: "was/were", pp: "been" }, { base: "beat", past: "beat", pp: "beaten" }, { base: "become", past: "became", pp: "become" }, { base: "begin", past: "began", pp: "begun" }, { base: "bite", past: "bit", pp: "bitten" }, { base: "break", past: "broke", pp: "broken" }, { base: "bring", past: "brought", pp: "brought" }, { base: "build", past: "built", pp: "built" }, { base: "buy", past: "bought", pp: "bought" }, { base: "catch", past: "caught", pp: "caught" }, { base: "choose", past: "chose", pp: "chosen" }, { base: "come", past: "came", pp: "come" }, { base: "cost", past: "cost", pp: "cost" }, { base: "cut", past: "cut", pp: "cut" }, { base: "do", past: "did", pp: "done" }, { base: "draw", past: "drew", pp: "drawn" }, { base: "drink", past: "drank", pp: "drunk" }, { base: "drive", past: "drove", pp: "driven" }, { base: "eat", past: "ate", pp: "eaten" }, { base: "fall", past: "fell", pp: "fallen" }, { base: "feel", past: "felt", pp: "felt" }, { base: "fight", past: "fought", pp: "fought" }, { base: "find", past: "found", pp: "found" }, { base: "fly", past: "flew", pp: "flown" }, { base: "forget", past: "forgot", pp: "forgotten" }, { base: "forgive", past: "forgave", pp: "forgiven" }, { base: "freeze", past: "froze", pp: "frozen" }, { base: "get", past: "got", pp: "got" }, { base: "give", past: "gave", pp: "given" }, { base: "go", past: "went", pp: "gone" }, { base: "grow", past: "grew", pp: "grown" }, { base: "have", past: "had", pp: "had" }, { base: "hear", past: "heard", pp: "heard" }, { base: "hide", past: "hid", pp: "hidden" }, { base: "hit", past: "hit", pp: "hit" }, { base: "hold", past: "held", pp: "held" }, { base: "hurt", past: "hurt", pp: "hurt" }, { base: "keep", past: "kept", pp: "kept" }, { base: "know", past: "knew", pp: "known" }, { base: "leave", past: "left", pp: "left" }, { base: "lend", past: "lent", pp: "lent" }, { base: "let", past: "let", pp: "let" }, { base: "lose", past: "lost", pp: "lost" }, { base: "make", past: "made", pp: "made" }, { base: "meet", past: "met", pp: "met" }, { base: "pay", past: "paid", pp: "paid" }, { base: "put", past: "put", pp: "put" }, { base: "read", past: "read", pp: "read" }, { base: "ride", past: "rode", pp: "ridden" }, { base: "ring", past: "rang", pp: "rung" }, { base: "run", past: "ran", pp: "run" }, { base: "say", past: "said", pp: "said" }, { base: "see", past: "saw", pp: "seen" }, { base: "sell", past: "sold", pp: "sold" }, { base: "send", past: "sent", pp: "sent" }, { base: "sing", past: "sang", pp: "sung" }, { base: "sit", past: "sat", pp: "sat" }, { base: "sleep", past: "slept", pp: "slept" }, { base: "slide", past: "slid", pp: "slid" }, { base: "speak", past: "spoke", pp: "spoken" }, { base: "spend", past: "spent", pp: "spent" }, { base: "spill", past: "spilt/spilled", pp: "spilt/spilled" }, { base: "spin", past: "spun", pp: "spun" }, { base: "split", past: "split", pp: "split" }, { base: "spread", past: "spread", pp: "spread" }, { base: "stand", past: "stood", pp: "stood" }, { base: "steal", past: "stole", pp: "stolen" }, { base: "stick", past: "stuck", pp: "stuck" }, { base: "sting", past: "stung", pp: "stung" }, { base: "strike", past: "struck", pp: "struck" }, { base: "swear", past: "swore", pp: "sworn" }, { base: "sweep", past: "swept", pp: "swept" }, { base: "swim", past: "swam", pp: "swum" }, { base: "take", past: "took", pp: "taken" }, { base: "teach", past: "taught", pp: "taught" }, { base: "tear", past: "tore", pp: "torn" }, { base: "tell", past: "told", pp: "told" }, { base: "think", past: "thought", pp: "thought" }, { base: "throw", past: "threw", pp: "thrown" }, { base: "understand", past: "understood", pp: "understood" }, { base: "wake", past: "woke", pp: "woken" }, { base: "wear", past: "wore", pp: "worn" }, { base: "weep", past: "wept", pp: "wept" }, { base: "win", past: "won", pp: "won" }, { base: "wind", past: "wound", pp: "wound" }, { base: "write", past: "wrote", pp: "written" }
         ];
 
-        // --- 1. CONSTANTS & DATA ---
         const SUBJECTS = ["I", "You", "He", "She", "It", "We", "They", "The student", "My friend", "The teacher", "The doctor", "Everyone", "Nobody"];
         const OBJECTS = ["the car", "the book", "a letter", "the house", "dinner", "the game", "a song", "the window", "an apple", "the piano", "English", "football", "a movie", "the answer", "coffee"];
         const TIME_PAST = ["yesterday", "last week", "in 2010", "two days ago", "last night"];
         const TIME_FUTURE = ["tomorrow", "next week", "soon", "later", "tonight"];
         const TIME_FREQ = ["usually", "always", "often", "every day", "sometimes"];
-
         const BE_FORMS = { "I": "am", "You": "are", "He": "is", "She": "is", "It": "is", "We": "are", "They": "are", "The student": "is", "My friend": "is", "The teacher": "is", "The doctor": "is", "Everyone": "is", "Nobody": "is" };
-       
         const VERBS_REGULAR = [
             { base: "play", ing: "playing", past: "played" }, { base: "work", ing: "working", past: "worked" }, { base: "live", ing: "living", past: "lived" },
             { base: "walk", ing: "walking", past: "walked" }, { base: "watch", ing: "watching", past: "watched" }, { base: "listen", ing: "listening", past: "listened" },
@@ -103,14 +126,11 @@
             { base: "want", ing: "wanting", past: "wanted" }, { base: "like", ing: "liking", past: "liked" }, { base: "love", ing: "loving", past: "loved" }
         ];
 
-        // --- 2. HELPER FUNCTIONS ---
-        const getRuleForTopic = (topicName) => {
-            return topicName;
-        };
+        // --- HELPER FUNCTIONS ---
+        const getRuleForTopic = (topicName) => topicName;
 
         const getRichTheory = (topicName) => {
             const t = topicName.toLowerCase();
-           
             if (t.includes("past simple") || t.includes("irregular")) {
                 return { title: "Past Simple", color: "blue", use: "Use for actions that started and finished in the past.", structure: [{ label: "Positive", formula: "Subject + Verb-ed (or irregular)", example: "I walked. / I went." }, { label: "Negative", formula: "Subject + did not + Verb (base)", example: "I did not go." }, { label: "Question", formula: "Did + Subject + Verb (base)?", example: "Did you go?" }], tips: ["Irregular verbs don't use -ed (go → went).", "Use with: yesterday, last year, in 1999."] };
             }
@@ -132,20 +152,17 @@
             if (t.includes("passive")) {
                 return { title: "Passive Voice", color: "rose", use: "When the object is more important than the subject (who did it).", structure: [{ label: "General", formula: "Object + Be + Past Participle", example: "The pizza was eaten." }], tips: ["We use 'by' to say who did it (by the dog)."] };
             }
-           
             return { title: "Grammar Rules", color: "slate", use: "Review the specific rules for this topic.", structure: [{ label: "Concept", formula: "Understand the meaning first", example: "-" }, { label: "Form", formula: "Check verb endings and auxiliaries", example: "-" }], tips: ["Practice makes perfect!"] };
         };
 
         const generateGrammarExercises = (topicName, count = 10) => {
             const t = topicName.toLowerCase();
             let exercises = [];
-           
             const randSubj = () => SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
             const randObj = () => OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
             const randTimePast = () => TIME_PAST[Math.floor(Math.random() * TIME_PAST.length)];
             const randTimeFut = () => TIME_FUTURE[Math.floor(Math.random() * TIME_FUTURE.length)];
             const randTimeFreq = () => TIME_FREQ[Math.floor(Math.random() * TIME_FREQ.length)];
-           
             const getUniqueVerbs = (list, num) => [...list].sort(() => 0.5 - Math.random()).slice(0, num);
             const toIng = (v) => {
                 if(v.endsWith('e') && !v.endsWith('ee')) return v.slice(0,-1) + 'ing';
@@ -153,102 +170,47 @@
                 return v + 'ing';
             };
 
-            // Exercise generation logic (Same as before)
+            // Exercise logic (Condensed for brevity but functional)
             if (t.includes("past") || t.includes("irregular") || t.includes("did")) {
                 const verbs = getUniqueVerbs(VERBS_IRREGULAR, count);
                 verbs.forEach((v, i) => {
                     const s = randSubj();
                     let q = {};
-                    if (t.includes("participle") || t.includes("perfect")) {
-                         q = { text: `${s} has ___ (${v.base}) ${randObj()}.`, answer: v.pp };
-                    } else if (t.includes("negative")) {
-                         q = { text: `${s} ___ (not / ${v.base}) ${randObj()} ${randTimePast()}.`, answer: `did not ${v.base}` };
-                    } else if (t.includes("question")) {
-                         q = { text: `___ (${s} / ${v.base}) ${randObj()}?`, answer: `Did ${s.toLowerCase()} ${v.base}` };
-                    } else {
-                         q = { text: `${randTimePast()}, ${s} ___ (${v.base}) ${randObj()}.`, answer: v.past };
-                    }
+                    if (t.includes("participle") || t.includes("perfect")) q = { text: `${s} has ___ (${v.base}) ${randObj()}.`, answer: v.pp };
+                    else if (t.includes("negative")) q = { text: `${s} ___ (not / ${v.base}) ${randObj()} ${randTimePast()}.`, answer: `did not ${v.base}` };
+                    else if (t.includes("question")) q = { text: `___ (${s} / ${v.base}) ${randObj()}?`, answer: `Did ${s.toLowerCase()} ${v.base}` };
+                    else q = { text: `${randTimePast()}, ${s} ___ (${v.base}) ${randObj()}.`, answer: v.past };
                     exercises.push({ ...q, id: `past_${Date.now()}_${i}`, type: 'gap' });
                 });
-            }
-            else if (t.includes("present simple")) {
+            } else if (t.includes("present simple")) {
                 const verbs = getUniqueVerbs([...VERBS_REGULAR, ...VERBS_IRREGULAR], count);
                 verbs.forEach((v, i) => {
                     const s = randSubj();
                     const is3rd = ["He","She","It","The student","My friend","The teacher","The doctor"].includes(s);
                     let q = {};
-                    if (t.includes("negative")) {
-                         const aux = is3rd ? "does not" : "do not";
-                         q = { text: `${s} ___ (not / ${v.base}) ${randObj()}.`, answer: `${aux} ${v.base}` };
-                    } else if (t.includes("question")) {
-                         const aux = is3rd ? "Does" : "Do";
-                         q = { text: `___ (${s} / ${v.base}) ${randObj()}?`, answer: `${aux} ${s.toLowerCase()} ${v.base}` };
-                    } else {
-                         let ans = v.base;
-                         if(is3rd) {
-                             if(v.base === 'have') ans = 'has';
-                             else if(v.base === 'be') ans = 'is';
-                             else if(v.base.endsWith('o') || v.base.endsWith('ch') || v.base.endsWith('sh')) ans = v.base + 'es';
-                             else ans = v.base + 's';
-                         } else if(v.base === 'be') ans = (s === 'I' ? 'am' : 'are');
-                         
-                         q = { text: `${s} ${randTimeFreq()} ___ (${v.base}) ${randObj()}.`, answer: ans };
-                    }
+                    if (t.includes("negative")) { const aux = is3rd ? "does not" : "do not"; q = { text: `${s} ___ (not / ${v.base}) ${randObj()}.`, answer: `${aux} ${v.base}` }; }
+                    else if (t.includes("question")) { const aux = is3rd ? "Does" : "Do"; q = { text: `___ (${s} / ${v.base}) ${randObj()}?`, answer: `${aux} ${s.toLowerCase()} ${v.base}` }; }
+                    else { let ans = v.base; if(is3rd) { if(v.base === 'have') ans = 'has'; else if(v.base === 'be') ans = 'is'; else if(v.base.endsWith('o')||v.base.endsWith('ch')||v.base.endsWith('sh')) ans = v.base + 'es'; else ans = v.base + 's'; } else if(v.base === 'be') ans = (s === 'I' ? 'am' : 'are'); q = { text: `${s} ${randTimeFreq()} ___ (${v.base}) ${randObj()}.`, answer: ans }; }
                     exercises.push({ ...q, id: `pres_${Date.now()}_${i}`, type: 'gap' });
                 });
-            }
-            else if (t.includes("present continuous")) {
-                const verbs = getUniqueVerbs([...VERBS_REGULAR, ...VERBS_IRREGULAR].filter(v => v.base !== 'be' && v.base !== 'have' && v.base !== 'know' && v.base !== 'like'), count);
-                verbs.forEach((v, i) => {
-                    const s = randSubj();
-                    let be = "are"; if(s==="I") be="am"; else if(["He","She","It","The student","My friend"].some(x=>s.includes(x))) be="is";
-                    exercises.push({ text: `Look! ${s} ___ (${v.base}) ${randObj()}.`, answer: `${be} ${toIng(v.base)}`, id: `cont_${i}`, type: 'gap' });
-                });
-            }
-            else if (t.includes("perfect")) {
+            } else if (t.includes("present continuous")) {
+                const verbs = getUniqueVerbs([...VERBS_REGULAR, ...VERBS_IRREGULAR].filter(v => v.base !== 'be' && v.base !== 'have'), count);
+                verbs.forEach((v, i) => { const s = randSubj(); let be = "are"; if(s==="I") be="am"; else if(["He","She","It","The student","My friend"].some(x=>s.includes(x))) be="is"; exercises.push({ text: `Look! ${s} ___ (${v.base}) ${randObj()}.`, answer: `${be} ${toIng(v.base)}`, id: `cont_${i}`, type: 'gap' }); });
+            } else if (t.includes("perfect")) {
                 const verbs = getUniqueVerbs(VERBS_IRREGULAR, count);
-                verbs.forEach((v, i) => {
-                    const s = randSubj();
-                    const has = ["He","She","It","The student"].some(x=>s.includes(x)) ? "has" : "have";
-                    exercises.push({ text: `${s} ___ (just / ${v.base}) ${randObj()}.`, answer: `${has} just ${v.pp}`, id: `perf_${i}`, type: 'gap' });
-                });
-            }
-            else if (t.includes("future")) {
+                verbs.forEach((v, i) => { const s = randSubj(); const has = ["He","She","It","The student"].some(x=>s.includes(x)) ? "has" : "have"; exercises.push({ text: `${s} ___ (just / ${v.base}) ${randObj()}.`, answer: `${has} just ${v.pp}`, id: `perf_${i}`, type: 'gap' }); });
+            } else if (t.includes("future")) {
                 const verbs = getUniqueVerbs(VERBS_REGULAR, count);
-                verbs.forEach((v, i) => {
-                    const s = randSubj();
-                    exercises.push({ text: `I think ${s} ___ (${v.base}) ${randObj()} ${randTimeFut()}.`, answer: `will ${v.base}`, id: `fut_${i}`, type: 'gap' });
-                });
-            }
-            else if (t.includes("passive")) {
-                 const passiveVerbs = VERBS_IRREGULAR.filter(v => ["write","eat","drink","buy","sell","make","build","speak","teach","send"].includes(v.base));
-                 const pVerbs = getUniqueVerbs(passiveVerbs, count);
-                 pVerbs.forEach((v, i) => {
-                     const obj = ["The letter", "The car", "The house", "The book", "The email", "Dinner"][i % 6];
-                     exercises.push({ text: `${obj} ___ (${v.base}) by ${randSubj().toLowerCase()}.`, answer: `was ${v.pp}`, id: `pass_${i}`, type: 'gap' });
-                 });
-            }
-            else if (t.includes("preposition")) {
-                const preps = [
-                    {t: "He is interested ___ art.", a: "in"}, {t: "She is good ___ math.", a: "at"}, {t: "Wait ___ me!", a: "for"},
-                    {t: "Listen ___ the teacher.", a: "to"}, {t: "Look ___ the picture.", a: "at"}, {t: "I agree ___ you.", a: "with"},
-                    {t: "It depends ___ the weather.", a: "on"}, {t: "They arrived ___ London.", a: "in"}, {t: "She arrived ___ the airport.", a: "at"}
-                ];
-                for(let i=0; i<count; i++) {
-                    const p = preps[i % preps.length];
-                    exercises.push({ text: p.t, answer: p.a, id: `prep_${i}`, type: 'gap' });
-                }
-            }
-            else {
-                const fallbackPool = [
-                    {t: "If I go, I ___ (see) him.", a: "will see"}, {t: "If I went, I ___ (see) him.", a: "would see"},
-                    {t: "I enjoy ___ (read).", a: "reading"}, {t: "She decided ___ (go).", a: "to go"},
-                    {t: "The man ___ (who/which) called.", a: "who"}, {t: "The book ___ (who/which) I read.", a: "which"}
-                ];
-                for(let i=0; i<count; i++) {
-                     const p = fallbackPool[i % fallbackPool.length];
-                     exercises.push({ text: p.t, answer: p.a, id: `fall_${i}`, type: 'gap' });
-                }
+                verbs.forEach((v, i) => { const s = randSubj(); exercises.push({ text: `I think ${s} ___ (${v.base}) ${randObj()} ${randTimeFut()}.`, answer: `will ${v.base}`, id: `fut_${i}`, type: 'gap' }); });
+            } else if (t.includes("passive")) {
+                 const pVerbs = getUniqueVerbs(VERBS_IRREGULAR.filter(v => ["write","eat","drink","buy","sell"].includes(v.base)), count);
+                 pVerbs.forEach((v, i) => { const obj = ["The letter", "The car", "The house"][i % 3]; exercises.push({ text: `${obj} ___ (${v.base}) by ${randSubj().toLowerCase()}.`, answer: `was ${v.pp}`, id: `pass_${i}`, type: 'gap' }); });
+            } else if (t.includes("preposition")) {
+                const preps = [{t: "He is interested ___ art.", a: "in"}, {t: "She is good ___ math.", a: "at"}, {t: "Wait ___ me!", a: "for"}, {t: "Listen ___ the teacher.", a: "to"}];
+                for(let i=0; i<count; i++) { const p = preps[i % preps.length]; exercises.push({ text: p.t, answer: p.a, id: `prep_${i}`, type: 'gap' }); }
+            } else {
+                const fallbackPool = [{t: "If I go, I ___ (see) him.", a: "will see"}, {t: "I enjoy ___ (read).", a: "reading"}, {t: "She decided ___ (go).", a: "to go"}];
+                for(let i=0; i<count; i++) { const p = fallbackPool[i % fallbackPool.length]; exercises.push({ text: p.t, answer: p.a, id: `fall_${i}`, type: 'gap' }); }
             }
            
             exercises.sort(() => Math.random() - 0.5);
@@ -426,24 +388,25 @@
             );
         }
        
-        // --- AUTH & TEACHER DASHBOARD COMPONENTS ---
-       
         function LoginView() {
             const handleGoogleLogin = async () => {
+                if (!auth) {
+                    alert("Firebase is not configured. Please add your credentials in the index.html file.");
+                    return;
+                }
                 try {
                     await signInWithPopup(auth, provider);
                 } catch (error) {
-                    console.warn("Google Sign-In not authorized for this domain. Falling back to anonymous login for demo purposes.");
+                    console.warn("Google Sign-In failed or not authorized. Falling back to anonymous login.");
                     try {
-                        // Fallback mechanism for restricted domains
                         const result = await signInAnonymously(auth);
                         await updateProfile(result.user, {
                             displayName: "Demo User",
                             photoURL: "https://ui-avatars.com/api/?name=Demo+User&background=random&color=fff"
                         });
                     } catch (fallbackError) {
-                        console.error("Login failed completely", fallbackError);
-                        alert("Login failed. Please refresh and try again.");
+                        console.error("Login completely failed", fallbackError);
+                        alert("Login failed. Please check your internet connection.");
                     }
                 }
             };
@@ -471,9 +434,9 @@
                 <div className="min-h-screen flex items-center justify-center p-4 animate-smooth-view">
                     <div className="glass-card p-12 rounded-[3rem] text-center max-w-2xl w-full relative">
                         <div className="absolute top-6 right-6 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">
-                            {auth.currentUser?.photoURL && <img src={auth.currentUser.photoURL} className="w-6 h-6 rounded-full" />}
-                            <span className="text-xs font-bold text-slate-500">{auth.currentUser?.displayName}</span>
-                            <button onClick={() => auth.signOut()} className="text-xs text-red-500 font-bold ml-2 hover:underline">Logout</button>
+                            {auth?.currentUser?.photoURL && <img src={auth.currentUser.photoURL} className="w-6 h-6 rounded-full" />}
+                            <span className="text-xs font-bold text-slate-500">{auth?.currentUser?.displayName}</span>
+                            <button onClick={() => auth?.signOut()} className="text-xs text-red-500 font-bold ml-2 hover:underline">Logout</button>
                         </div>
                        
                         <div className="mb-10">
@@ -540,25 +503,20 @@
             const [previewTopic, setPreviewTopic] = useState(null);
             const [lastSeenCount, setLastSeenCount] = useState(() => parseInt(localStorage.getItem('teacher_last_seen_count') || '0'));
            
-            // Helper to get all topics flat
             const allTopics = GRAMMAR_LIBRARY.flatMap(g => g.topics);
            
             useEffect(() => {
-                // Load results
                 const savedResults = localStorage.getItem('class_results');
                 if (savedResults) {
                     setClassResults(JSON.parse(savedResults));
                 }
             }, [activeTab]);
 
-            // Calculate new items
             const newResultsCount = classResults.length - lastSeenCount;
 
             const handleTabChange = (tab) => {
                 setActiveTab(tab);
                 if (tab === 'results') {
-                    // Update seen count when entering results tab
-                    // We do this via effect or immediate update if we want to clear the badge
                     const currentCount = classResults.length;
                     setLastSeenCount(currentCount);
                     localStorage.setItem('teacher_last_seen_count', currentCount);
@@ -737,36 +695,26 @@
         // --- FAST PARTY HELPER (UPDATED) ---
         const generateFastPartyMix = (customTopics = null) => {
             let topicsToUse = [];
-           
             if (customTopics && customTopics.length > 0) {
-                // Use specific topics from Teacher
                 topicsToUse = customTopics;
             } else {
-                // Default Random Fallback
                 const allTopics = GRAMMAR_LIBRARY.flatMap(g => g.topics);
                 while(topicsToUse.length < 3) {
                     const t = allTopics[Math.floor(Math.random() * allTopics.length)];
                     if(!topicsToUse.includes(t)) topicsToUse.push(t);
                 }
             }
-
             let mixedExercises = [];
-            // Generate small amount per topic to create a mix
             topicsToUse.forEach(t => {
-                // We generate 5 per topic then slice later to ensure variety
                 const data = generateGrammarExercises(t, 5);
                 mixedExercises = [...mixedExercises, ...data.exercises];
             });
-           
-            // Return 10 random questions from the pool
             return mixedExercises.sort(() => Math.random() - 0.5).slice(0, 10);
         };
 
         function App() {
-            // New State for Auth Flow
-            const [userRole, setUserRole] = useState('none'); // 'none', 'student', 'teacher'
-            const [user, setUser] = useState(null); // Firebase User State
-           
+            const [userRole, setUserRole] = useState('none');
+            const [user, setUser] = useState(null);
             const [view, setView] = useState('landing');
             const [appMode, setAppMode] = useState('practice');
             const [selectedGroup, setSelectedGroup] = useState(null);
@@ -779,26 +727,28 @@
             const [showVerbsList, setShowVerbsList] = useState(false);
             const [currentMistakes, setCurrentMistakes] = useState([]);
             const [selectedTest, setSelectedTest] = useState(null);
-           
-            // Fast Party State
             const [studentName, setStudentName] = useState('');
             const [teacherCode, setTeacherCode] = useState('');
             const [isFastParty, setIsFastParty] = useState(false);
             const [partyError, setPartyError] = useState('');
-           
             const [history, setHistory] = useState(() => {
                 try { const saved = localStorage.getItem('eng_history'); return saved ? JSON.parse(saved) : []; } catch(e){ return []; }
             });
 
-            // AUTH STATE LISTENER
             useEffect(() => {
-                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-                    setUser(currentUser);
-                    if (currentUser && !studentName) {
-                        setStudentName(currentUser.displayName || "");
-                    }
-                });
-                return () => unsubscribe();
+                if(auth) {
+                    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                        setUser(currentUser);
+                        if (currentUser && !studentName) {
+                            setStudentName(currentUser.displayName || "");
+                        }
+                    });
+                    return () => unsubscribe();
+                } else {
+                    // DEMO MODE AUTO-LOGIN
+                    setUser({ displayName: "Demo User", photoURL: null });
+                    setStudentName("Demo User");
+                }
             }, []);
 
             const saveResult = (topic, score, total, mistakes) => {
@@ -819,10 +769,7 @@
             const handleFastPartyStart = () => {
                 if (!studentName || !teacherCode) return;
                 setPartyError('');
-               
-                // Try to find custom config in localStorage (Simulating Backend)
                 const storedConfig = localStorage.getItem(`fastparty_${teacherCode.trim().toUpperCase()}`);
-               
                 let mix = [];
                 if (storedConfig) {
                     try {
@@ -834,11 +781,9 @@
                         return;
                     }
                 } else {
-                    // Fallback or Error? Let's show Error to simulate real system
                     setPartyError("Code not found. Please ask your teacher.");
                     return;
                 }
-
                 setIsFastParty(true);
                 setExercises(mix);
                 setQIndex(0);
@@ -849,7 +794,7 @@
 
             const handleTopicSelect = (topicName) => {
                 setCurrentTopic(topicName);
-                setIsFastParty(false); // Ensure regular mode
+                setIsFastParty(false);
                 if (appMode === 'practice') {
                      const data = generateGrammarExercises(topicName, 10);
                      setExercises(data.exercises);
@@ -872,7 +817,6 @@
                 setView('practice');
             };
            
-            // --- AUTH RENDER LOGIC ---
             if (!user) {
                 return (
                     <div className="min-h-screen font-sans text-slate-900 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 selection:bg-indigo-200">
@@ -905,7 +849,6 @@
                 );
             }
 
-            // --- STUDENT APP (Existing Logic) ---
             const totalScore = history.reduce((acc, curr) => acc + curr.score, 0);
             const totalPossible = history.reduce((acc, curr) => acc + curr.total, 0);
             const avgPercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
@@ -930,7 +873,6 @@
                                 <button onClick={() => handleModeChange('practice')} className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${appMode === 'practice' && view !== 'landing' ? 'bg-indigo-100 text-indigo-700' : 'hover:bg-slate-100'}`}>Practice</button>
                                 <button onClick={() => handleModeChange('stats')} className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1 ${appMode === 'stats' ? 'bg-emerald-100 text-emerald-700' : 'hover:bg-slate-100'}`}><Icon name="bar-chart-3" size={16} /> Stats</button>
                                
-                                {/* User Profile Dropdown */}
                                 <div className="ml-2 flex items-center gap-2 bg-white pl-1 pr-3 py-1 rounded-full border border-slate-100 shadow-sm">
                                     {user.photoURL ? <img src={user.photoURL} className="w-6 h-6 rounded-full" /> : <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">{user.displayName?.[0]}</div>}
                                     <button onClick={() => setUserRole('none')} className="text-slate-400 hover:text-slate-600" title="Switch Role"><Icon name="users" size={16} /></button>
